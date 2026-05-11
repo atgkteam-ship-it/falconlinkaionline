@@ -20,11 +20,11 @@ function ApplyPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ full_name: "", phone: "", pincode: "", areas: "", bio: "" });
   const [busy, setBusy] = useState(false);
-  const [existing, setExisting] = useState<boolean | null>(null);
+  const [existing, setExisting] = useState<{ verified: boolean } | null>(null);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
-    if (user) void supabase.from("agents").select("id,verified").eq("user_id", user.id).maybeSingle().then(({ data }) => setExisting(!!data));
+    if (user) void supabase.from("agents").select("id,verified").eq("user_id", user.id).maybeSingle().then(({ data }) => setExisting(data ? { verified: data.verified } : null));
   }, [user, loading, navigate]);
 
   const submit = async () => {
@@ -42,7 +42,25 @@ function ApplyPage() {
     navigate({ to: "/" });
   };
 
-  if (existing) return <PageLayout><div className="mx-auto max-w-md py-20 text-center"><ShieldCheck className="mx-auto h-12 w-12 text-primary" /><h2 className="mt-4 font-display text-xl font-semibold">Application already submitted</h2><p className="mt-2 text-sm text-muted-foreground">An admin will verify your account shortly.</p></div></PageLayout>;
+  if (existing) return (
+    <PageLayout>
+      <div className="mx-auto max-w-md py-20 text-center px-4">
+        <ShieldCheck className="mx-auto h-12 w-12 text-primary" />
+        {existing.verified ? (
+          <>
+            <h2 className="mt-4 font-display text-xl font-semibold">You're a verified agent</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Head to your dashboard to view assigned jobs.</p>
+            <Button className="mt-6 grad-primary text-primary-foreground" onClick={() => navigate({ to: "/agent" })}>Go to Agent Dashboard</Button>
+          </>
+        ) : (
+          <>
+            <h2 className="mt-4 font-display text-xl font-semibold">Application already submitted</h2>
+            <p className="mt-2 text-sm text-muted-foreground">An admin will verify your account shortly.</p>
+          </>
+        )}
+      </div>
+    </PageLayout>
+  );
 
   return (
     <PageLayout>
