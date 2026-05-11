@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import { NotificationsBell } from "./NotificationsBell";
 
 const NAV = [
   { to: "/", label: "Home" },
@@ -58,6 +59,7 @@ export function Header() {
           <button onClick={toggleTheme} aria-label="Toggle theme" className="rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground">
             {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
+          <NotificationsBell />
           {user ? (
             <div className="hidden items-center gap-2 md:flex">
               <Link to="/bookings" className="text-sm font-medium text-muted-foreground hover:text-foreground">Bookings</Link>
