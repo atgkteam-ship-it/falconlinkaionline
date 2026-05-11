@@ -20,11 +20,11 @@ function ApplyPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ full_name: "", phone: "", pincode: "", areas: "", bio: "" });
   const [busy, setBusy] = useState(false);
-  const [existing, setExisting] = useState<boolean | null>(null);
+  const [existing, setExisting] = useState<{ verified: boolean } | null>(null);
 
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
-    if (user) void supabase.from("agents").select("id,verified").eq("user_id", user.id).maybeSingle().then(({ data }) => setExisting(!!data));
+    if (user) void supabase.from("agents").select("id,verified").eq("user_id", user.id).maybeSingle().then(({ data }) => setExisting(data ? { verified: data.verified } : null));
   }, [user, loading, navigate]);
 
   const submit = async () => {
