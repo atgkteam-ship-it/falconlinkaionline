@@ -205,13 +205,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "bookings_agent_id_fkey"
-            columns: ["agent_id"]
-            isOneToOne: false
-            referencedRelation: "agents_public"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "bookings_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
@@ -320,13 +313,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "reviews_agent_id_fkey"
-            columns: ["agent_id"]
-            isOneToOne: false
-            referencedRelation: "agents_public"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "reviews_booking_id_fkey"
             columns: ["booking_id"]
             isOneToOne: true
@@ -403,81 +389,7 @@ export type Database = {
       }
     }
     Views: {
-      agents_public: {
-        Row: {
-          bio: string | null
-          created_at: string | null
-          full_name: string | null
-          id: string | null
-          pincode: string | null
-          rating: number | null
-          service_areas: string[] | null
-          total_jobs: number | null
-          verified: boolean | null
-        }
-        Insert: {
-          bio?: string | null
-          created_at?: string | null
-          full_name?: string | null
-          id?: string | null
-          pincode?: string | null
-          rating?: number | null
-          service_areas?: string[] | null
-          total_jobs?: number | null
-          verified?: boolean | null
-        }
-        Update: {
-          bio?: string | null
-          created_at?: string | null
-          full_name?: string | null
-          id?: string | null
-          pincode?: string | null
-          rating?: number | null
-          service_areas?: string[] | null
-          total_jobs?: number | null
-          verified?: boolean | null
-        }
-        Relationships: []
-      }
-      reviews_public: {
-        Row: {
-          agent_id: string | null
-          comment: string | null
-          created_at: string | null
-          id: string | null
-          rating: number | null
-        }
-        Insert: {
-          agent_id?: string | null
-          comment?: string | null
-          created_at?: string | null
-          id?: string | null
-          rating?: number | null
-        }
-        Update: {
-          agent_id?: string | null
-          comment?: string | null
-          created_at?: string | null
-          id?: string | null
-          rating?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "reviews_agent_id_fkey"
-            columns: ["agent_id"]
-            isOneToOne: false
-            referencedRelation: "agents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reviews_agent_id_fkey"
-            columns: ["agent_id"]
-            isOneToOne: false
-            referencedRelation: "agents_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      [_ in never]: never
     }
     Functions: {
       has_role: {
