@@ -1,3 +1,5 @@
 {
-  "outputDirectory": "dist"
+  "buildCommand": "npm run build",
+  "framework": "tanstack-start",
+  "outputDirectory": ".vercel/output"
 }
