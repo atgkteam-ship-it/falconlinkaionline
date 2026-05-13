@@ -1,117 +1,201 @@
-# FalconLink AI — Build Plan (V1 Full MVP)
+# FalconLink — Marketplace + Payments Plan
 
-A premium, AI-first platform for India where users describe a need in plain Hindi/English (e.g. "PAN card banana hai") and the AI handles intent detection, service creation, agent matching by pincode, pricing/time estimates, and bookings.
+Do bade chunks: **(A) Marketplace expansion** (Fiverr/Upwork-style gigs + custom requests) aur **(B) Payments + wallet** (Stripe + personal UPI QR + agent payouts). Plus chhota footer email change.
 
-## 1. Design Direction
+---
 
-- **Palette**: White `#ffffff`, surface `#f5f7fb`, primary blue `#1a73e8`, deep navy `#0a2540` (semantic tokens in `src/styles.css`, oklch).
-- **Style**: Uber/Urban Company-inspired — clean white UI, electric blue accents, glassmorphism cards, soft shadows, rounded-2xl, smooth Framer Motion transitions.
-- **Typography**: Space Grotesk (display) + Inter (body).
-- **Dark mode**: full token-based dark theme.
-- **Mobile-first**, fully responsive.
+## 1. Database changes (migration)
 
-## 2. Pages & Routes (TanStack Start)
+### New tables
 
-```text
-/                       Landing (hero + AI prompt bar + how it works)
-/services               AI-generated service catalog (PAN, Aadhaar, Birth cert, etc.)
-/services/$slug         Service detail + booking CTA
-/ai                     Full AI assistant (chat + actions)
-/book/$serviceId        Booking flow (pincode → agent match → schedule)
-/bookings               Customer bookings + live status
-/agents/apply           Agent registration panel
-/_authenticated/agent   Agent dashboard (jobs, earnings, ratings)
-/_authenticated/admin   Admin dashboard (users, agents, bookings, services)
-/login                  Email + Google sign-in
-/auth/callback          OAuth callback
+- **`agent_gigs`** — Fiverr-style listings agents khud create karenge
+  - `agent_id`, `title`, `slug`, `description`, `category`, `cover_image_url`, `tags[]`, `status` (`draft|pending|approved|rejected|paused`), `rejection_reason`, timestamps
+  - Sirf `approved` gigs public dikhenge; admin approve karega
+
+- **`gig_packages`** — har gig ke 1-3 tier (Basic/Standard/Premium)
+  - `gig_id`, `tier`, `title`, `description`, `price`, `delivery_days`, `revisions`
+
+- **`service_requests`** — customer-posted custom demands (Upwork style)
+  - `customer_id`, `title`, `description`, `category`, `budget_min`, `budget_max`, `pincode`, `deadline`, `status` (`open|assigned|completed|cancelled`)
+
+- **`request_proposals`** — agents bid on requests
+  - `request_id`, `agent_id`, `quote_price`, `delivery_days`, `message`, `status` (`pending|accepted|rejected`)
+
+- **`payments`** — har booking ka payment record
+  - `booking_id`, `amount`, `commission` (15%), `agent_amount` (85%), `method` (`stripe|upi_manual`), `status` (`pending|paid|failed|refunded`), `stripe_session_id`, `upi_utr`, `upi_screenshot_url`, `verified_by` (admin id), `verified_at`
+
+- **`agent_wallets`** — running balance per agent
+  - `agent_id` (unique), `available_balance`, `pending_balance`, `lifetime_earnings`
+
+- **`wallet_transactions`** — credit/debit ledger
+  - `agent_id`, `type` (`credit_booking|debit_withdrawal|adjustment`), `amount`, `booking_id`, `withdrawal_id`, `note`
+
+- **`withdrawal_requests`** — agent payout requests
+  - `agent_id`, `amount`, `upi_id`, `bank_account`, `ifsc`, `status` (`pending|approved|paid|rejected`), `admin_note`, `paid_at`
+
+- **`platform_settings`** — single-row config
+  - `commission_pct` (default 15), `upi_id`, `upi_qr_url`, `upi_payee_name`, `min_withdrawal`
+
+### Bookings table changes
+- Add `gig_id`, `package_tier`, `request_id` (nullable — booking can come from service catalog OR gig OR accepted proposal)
+- Add `payment_status` (`unpaid|paid|refunded`)
+
+### Storage buckets
+- `gig-covers` (public read) — gig cover images
+- `payment-proofs` (private, owner+admin) — UPI screenshots
+- `id-proofs` (already exists pattern, ensure private)
+
+### RLS (key rules)
+- `agent_gigs`: agent CRUD own; public read approved only; admin all
+- `gig_packages`: via gig ownership; public read for approved gigs
+- `service_requests`: customer CRUD own; agents read open; admin all
+- `request_proposals`: agent CRUD own; request owner read; admin all
+- `payments`: customer read own (via booking); agent read own; admin all+update
+- `agent_wallets` / `wallet_transactions`: agent read own; admin all
+- `withdrawal_requests`: agent insert+read own; admin update
+- `platform_settings`: public read of UPI fields; admin write
+
+### Triggers / functions
+- On `payments.status -> paid`: auto-credit `agent_wallets.pending_balance` with `agent_amount`, insert wallet_transaction
+- On `bookings.status -> completed` + payment paid: move pending → available
+- On withdrawal `paid`: debit available, insert wallet_transaction
+- Slug generator for `agent_gigs`
+
+---
+
+## 2. Payments flow
+
+### Stripe (Lovable's built-in seamless integration)
+- Enable via `enable_stripe_payments` (Lovable-managed, no API key chahiye)
+- Tax: **Option 3 — no tax automation** (govt services + India me MOR ineligible)
+- Per-booking one-time payment
+
+### Personal UPI QR (manual)
+- Admin `/admin/settings` me UPI ID + QR image + payee name set kare → `platform_settings`
+- Checkout par customer ko QR + UPI ID + amount dikhe
+- Customer UTR number daale + screenshot upload kare
+- Status `pending` → admin verify karke `paid` mark kare → wallet auto-credit
+
+### Checkout page (`/checkout/$bookingId`)
+- 2 tabs: **Stripe** (auto) | **UPI QR** (manual)
+- Stripe success → `/api/public/webhooks/stripe` verify → mark paid
+- UPI submit → status `pending`, admin notification
+
+---
+
+## 3. New routes
+
+```
+/services                     → 2 TABS: "Government Services" | "Freelance Gigs"
+/gigs/$slug                   → Gig detail (packages, agent profile, reviews, Order button)
+/requests                     → Browse open customer requests (agents)
+/requests/new                 → Customer posts a request
+/requests/$id                 → Request detail + proposals (owner + bidding agents)
+/checkout/$bookingId          → Stripe / UPI tabs
+/checkout/success             → Confirmation
+/_authenticated/agent/gigs              → Agent: my gigs list
+/_authenticated/agent/gigs/new          → Create/edit gig wizard
+/_authenticated/agent/wallet            → Balance, transactions, withdraw button
+/_authenticated/agent/proposals         → My bids on requests
+/_authenticated/admin (existing)        → Add tabs: Gigs approval, Payments verify, Withdrawals, Settings (UPI/commission)
+/api/public/webhooks/stripe             → Stripe webhook
 ```
 
-Each route gets its own `head()` with unique title/description/OG tags. SEO + manifest for installable PWA (manifest only, no SW — per Lovable PWA guidance).
+### Server functions (createServerFn)
+- `createGig`, `submitGigForApproval`, `approveGig`, `rejectGig`
+- `createServiceRequest`, `submitProposal`, `acceptProposal` (creates booking)
+- `createCheckoutSession` (Stripe), `submitUpiPayment`, `verifyUpiPayment` (admin)
+- `requestWithdrawal`, `markWithdrawalPaid` (admin)
 
-## 3. AI Layer (Gemini via Lovable AI Gateway)
+---
 
-Server function `runAssistant` (TanStack `createServerFn`) using Vercel AI SDK + Lovable AI Gateway with `google/gemini-3-flash-preview`. Tools the AI can call:
+## 4. Agent gig template (Fiverr-style)
 
-- `detectIntent(query)` → service category + urgency
-- `suggestService({intent})` → matching service + required documents + price + ETA
-- `findAgents({serviceId, pincode})` → ranked agents from DB
-- `createBooking({serviceId, agentId, pincode, address, schedule})`
-- `getBookingStatus({bookingId})`
-- `supportFAQ({topic})`
+Wizard steps:
+1. **Overview** — title, category, tags, search keywords
+2. **Pricing** — 1-3 tiers (Basic/Standard/Premium): price, delivery days, revisions, what's included
+3. **Description** — rich text, FAQs
+4. **Cover image** — upload to `gig-covers` bucket
+5. **Submit for review** — admin approve karega, fir public
 
-The `/ai` page renders streamed assistant messages with tool-result cards (service preview, agent cards, booking confirmation). Markdown rendering with `react-markdown`.
+Verified agents only can publish (existing `agents.verified` check).
 
-## 4. Backend (Lovable Cloud)
+---
 
-Tables (all with RLS):
+## 5. Customer service request flow (Upwork-style)
 
-- `profiles` (id, full_name, phone, pincode, role-less)
-- `user_roles` (user_id, role: `customer|agent|admin`) — separate table, `has_role()` SECURITY DEFINER
-- `services` (id, slug, title, description, category, base_price, eta_minutes, required_documents jsonb, ai_generated bool)
-- `agents` (id user_id, full_name, phone, pincode, service_areas text[], verified bool, rating, total_jobs, bio, id_proof_url)
-- `bookings` (id, customer_id, agent_id, service_id, pincode, address, scheduled_at, status: `pending|assigned|in_progress|completed|cancelled`, price, notes)
-- `booking_events` (booking_id, status, note, created_at) — for live tracking timeline
-- `reviews` (booking_id, customer_id, agent_id, rating, comment)
-- `notifications` (user_id, title, body, link, read_at)
-- `ai_conversations` + `ai_messages` (threaded chat history)
+1. Customer `/requests/new` par form bhare: title, desc, category, budget range, pincode, deadline
+2. Verified agents `/requests` par browse karke proposals submit karein
+3. Customer proposals dekhe, ek accept kare → automatic `booking` create + checkout redirect
+4. Baad ka flow normal booking jaisa
 
-Realtime enabled on `bookings`, `booking_events`, `notifications` for live tracking + toast notifications.
+---
 
-Auth: Email/password + Google OAuth. Admin login: seed one admin user (you'll set credentials via the admin setup flow on first run).
+## 6. Services page restructure
 
-Agent matching: pincode-only — query `agents` where `pincode = $1 OR $1 = ANY(service_areas)` AND `verified = true`, ordered by `rating DESC, total_jobs DESC`.
+`/services` par 2 tabs (shadcn Tabs):
+- **Government Services** — existing catalog (PAN, Aadhaar, etc.)
+- **Freelance Gigs** — `agent_gigs` where status=approved, with category filter + search
 
-## 5. Customer Panel
+Cards me **Book / Order** button → `/services/$slug` ya `/gigs/$slug`.
 
-- AI prompt bar on every page (sticky on mobile)
-- Service browse + detail
-- Booking flow: pincode → agent list → select → schedule → confirm
-- "My Bookings" with realtime status timeline
-- Reviews after completion
-- Notification bell (realtime)
+---
 
-## 6. Agent Panel
+## 7. Commission + wallet logic
 
-- `/agents/apply` public form: name, phone, pincode, service_areas, ID proof upload (Cloud Storage), bio
-- After admin verification → `/_authenticated/agent` dashboard: incoming jobs, accept/decline, mark in-progress/complete, earnings, rating
+- Booking amount = ₹X
+- Commission = 15% → platform
+- Agent earnings = 85% → wallet `pending_balance`
+- Booking complete + 0-day hold → move to `available_balance`
+- Min withdrawal: ₹500 (configurable)
+- Withdraw form: UPI ID ya bank+IFSC → admin manually pay → mark paid → wallet debit
 
-## 7. Admin Dashboard
+Agent wallet page dikhayega: Available, Pending, Lifetime, Transactions list, "Withdraw" button.
 
-- KPIs (users, agents, bookings, revenue)
-- Verify agents (approve/reject)
-- Manage services (AI can auto-generate via Gemini: title, description, docs, price, ETA)
-- Manage bookings (override status, reassign)
-- Users table
-- AI command bar — admin types "verify all agents in 110001 with 5+ ratings" → AI executes via tools
-- Protected by `admin` role check in `_authenticated/admin` layout
+---
 
-## 8. Build Order (incremental)
+## 8. Admin additions
 
-1. Enable Lovable Cloud, create schema + RLS + roles + seed services
-2. Design system tokens, theme, dark mode, layout shell, header/footer, PWA manifest
-3. Landing page + service catalog + service detail (with mock-then-real data)
-4. Auth (email + Google) + profile + role bootstrap
-5. AI assistant page + Gemini server function + first 3 tools (intent, suggest, find agents)
-6. Booking flow + realtime status + notifications
-7. Agent application + agent dashboard
-8. Admin dashboard + AI command bar + agent verification
-9. Reviews + ratings + AI-generated service listings
-10. Polish: animations, SEO heads per route, PWA manifest, responsive QA
+New tabs in `/admin`:
+- **Gigs** — pending approval list, approve/reject with reason
+- **Payments** — pending UPI verifications (UTR + screenshot view + Mark Paid)
+- **Withdrawals** — pending requests (agent details + amount + Mark Paid)
+- **Settings** — UPI ID, QR upload, payee name, commission %, min withdrawal
 
-## Technical Notes
+---
 
-- Stack: TanStack Start + React 19 + Tailwind v4 + shadcn/ui + Framer Motion + Lovable Cloud (Supabase) + Lovable AI Gateway (Gemini).
-- AI calls server-side only via `createServerFn`; `LOVABLE_API_KEY` never reaches client.
-- Roles in separate `user_roles` table with `has_role()` SECURITY DEFINER (no recursive RLS).
-- Realtime via Supabase channels for bookings/notifications.
-- Manifest-only PWA (installable, no service worker — avoids preview iframe issues).
-- Maps deferred — pincode + service_areas array gives nearby matching now; Google Maps can be added later by providing an API key.
+## 9. Footer email change
 
-## Out of Scope for V1
+`src/components/layout/Footer.tsx` me email update → **business.aarishsaifi@gmail.com**
 
-- Payments / Stripe (add later)
-- Google Maps + live GPS tracking (pincode-only for now)
-- SMS/WhatsApp notifications (in-app + email only)
-- Native mobile app (PWA covers install)
+---
 
-Given the size, I'll build this in the order above, shipping working slices each step rather than one giant change.
+## 10. Build order
+
+1. Migration (all tables, RLS, triggers, buckets, seed `platform_settings`)
+2. Footer email change (1-line)
+3. Enable Stripe payments (Lovable seamless)
+4. Admin settings page (UPI/commission config)
+5. Payments table + checkout page (Stripe + UPI tabs) + Stripe webhook
+6. Wallet system (server fns, agent wallet page, withdrawal flow, admin withdrawals tab)
+7. Agent gigs (wizard, my-gigs page, admin approval tab, gig detail public page)
+8. Customer service requests (post + browse + proposals + accept flow)
+9. Services page tabs restructure (Government | Gigs)
+10. Polish: notifications on payment/approval/withdrawal events, empty states
+
+---
+
+## Technical notes
+
+- All payment + wallet mutations via `createServerFn` with `requireSupabaseAuth`; admin checks via `has_role(uid,'admin')`
+- Stripe webhook at `/api/public/webhooks/stripe` with signature verification (uses `STRIPE_WEBHOOK_SECRET` auto-set by Lovable)
+- UPI screenshot upload via Supabase Storage signed URLs
+- Wallet ledger pattern: never mutate balances directly — always insert `wallet_transactions` and recompute via trigger to avoid drift
+- Gigs use slug for SEO; each gig page gets unique `head()` meta
+
+## Out of scope (V2)
+
+- Stripe Connect auto-split (using manual wallet now)
+- In-app chat between customer and agent
+- Gig analytics/impressions
+- Dispute resolution UI (admin can manually refund for now)

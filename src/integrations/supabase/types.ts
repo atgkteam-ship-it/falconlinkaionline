@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_gigs: {
+        Row: {
+          agent_id: string
+          category: string
+          cover_image_url: string | null
+          created_at: string
+          description: string
+          id: string
+          rejection_reason: string | null
+          slug: string
+          status: Database["public"]["Enums"]["gig_status"]
+          tags: string[]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          category: string
+          cover_image_url?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          rejection_reason?: string | null
+          slug: string
+          status?: Database["public"]["Enums"]["gig_status"]
+          tags?: string[]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          category?: string
+          cover_image_url?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          rejection_reason?: string | null
+          slug?: string
+          status?: Database["public"]["Enums"]["gig_status"]
+          tags?: string[]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      agent_wallets: {
+        Row: {
+          agent_id: string
+          available_balance: number
+          lifetime_earnings: number
+          pending_balance: number
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          available_balance?: number
+          lifetime_earnings?: number
+          pending_balance?: number
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          available_balance?: number
+          lifetime_earnings?: number
+          pending_balance?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       agents: {
         Row: {
           bio: string | null
@@ -159,12 +228,16 @@ export type Database = {
           agent_id: string | null
           created_at: string
           customer_id: string
+          gig_id: string | null
           id: string
           notes: string | null
+          package_tier: Database["public"]["Enums"]["gig_tier"] | null
+          payment_status: Database["public"]["Enums"]["payment_status_t"]
           pincode: string
           price: number
+          request_id: string | null
           scheduled_at: string | null
-          service_id: string
+          service_id: string | null
           status: Database["public"]["Enums"]["booking_status"]
           updated_at: string
         }
@@ -173,12 +246,16 @@ export type Database = {
           agent_id?: string | null
           created_at?: string
           customer_id: string
+          gig_id?: string | null
           id?: string
           notes?: string | null
+          package_tier?: Database["public"]["Enums"]["gig_tier"] | null
+          payment_status?: Database["public"]["Enums"]["payment_status_t"]
           pincode: string
           price?: number
+          request_id?: string | null
           scheduled_at?: string | null
-          service_id: string
+          service_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
           updated_at?: string
         }
@@ -187,12 +264,16 @@ export type Database = {
           agent_id?: string | null
           created_at?: string
           customer_id?: string
+          gig_id?: string | null
           id?: string
           notes?: string | null
+          package_tier?: Database["public"]["Enums"]["gig_tier"] | null
+          payment_status?: Database["public"]["Enums"]["payment_status_t"]
           pincode?: string
           price?: number
+          request_id?: string | null
           scheduled_at?: string | null
-          service_id?: string
+          service_id?: string | null
           status?: Database["public"]["Enums"]["booking_status"]
           updated_at?: string
         }
@@ -205,10 +286,68 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "bookings_gig_id_fkey"
+            columns: ["gig_id"]
+            isOneToOne: false
+            referencedRelation: "agent_gigs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "bookings_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gig_packages: {
+        Row: {
+          created_at: string
+          delivery_days: number
+          description: string
+          gig_id: string
+          id: string
+          price: number
+          revisions: number
+          tier: Database["public"]["Enums"]["gig_tier"]
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          delivery_days?: number
+          description: string
+          gig_id: string
+          id?: string
+          price: number
+          revisions?: number
+          tier: Database["public"]["Enums"]["gig_tier"]
+          title: string
+        }
+        Update: {
+          created_at?: string
+          delivery_days?: number
+          description?: string
+          gig_id?: string
+          id?: string
+          price?: number
+          revisions?: number
+          tier?: Database["public"]["Enums"]["gig_tier"]
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gig_packages_gig_id_fkey"
+            columns: ["gig_id"]
+            isOneToOne: false
+            referencedRelation: "agent_gigs"
             referencedColumns: ["id"]
           },
         ]
@@ -240,6 +379,95 @@ export type Database = {
           read_at?: string | null
           title?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          agent_amount: number
+          amount: number
+          booking_id: string
+          commission: number
+          created_at: string
+          id: string
+          method: Database["public"]["Enums"]["payment_method_t"]
+          status: Database["public"]["Enums"]["payment_record_status"]
+          stripe_session_id: string | null
+          updated_at: string
+          upi_screenshot_url: string | null
+          upi_utr: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          agent_amount?: number
+          amount: number
+          booking_id: string
+          commission?: number
+          created_at?: string
+          id?: string
+          method: Database["public"]["Enums"]["payment_method_t"]
+          status?: Database["public"]["Enums"]["payment_record_status"]
+          stripe_session_id?: string | null
+          updated_at?: string
+          upi_screenshot_url?: string | null
+          upi_utr?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          agent_amount?: number
+          amount?: number
+          booking_id?: string
+          commission?: number
+          created_at?: string
+          id?: string
+          method?: Database["public"]["Enums"]["payment_method_t"]
+          status?: Database["public"]["Enums"]["payment_record_status"]
+          stripe_session_id?: string | null
+          updated_at?: string
+          upi_screenshot_url?: string | null
+          upi_utr?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_settings: {
+        Row: {
+          commission_pct: number
+          id: number
+          min_withdrawal: number
+          updated_at: string
+          upi_id: string | null
+          upi_payee_name: string | null
+          upi_qr_url: string | null
+        }
+        Insert: {
+          commission_pct?: number
+          id?: number
+          min_withdrawal?: number
+          updated_at?: string
+          upi_id?: string | null
+          upi_payee_name?: string | null
+          upi_qr_url?: string | null
+        }
+        Update: {
+          commission_pct?: number
+          id?: number
+          min_withdrawal?: number
+          updated_at?: string
+          upi_id?: string | null
+          upi_payee_name?: string | null
+          upi_qr_url?: string | null
         }
         Relationships: []
       }
@@ -275,6 +503,47 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      request_proposals: {
+        Row: {
+          agent_id: string
+          created_at: string
+          delivery_days: number
+          id: string
+          message: string | null
+          quote_price: number
+          request_id: string
+          status: Database["public"]["Enums"]["proposal_status"]
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          delivery_days?: number
+          id?: string
+          message?: string | null
+          quote_price: number
+          request_id: string
+          status?: Database["public"]["Enums"]["proposal_status"]
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          delivery_days?: number
+          id?: string
+          message?: string | null
+          quote_price?: number
+          request_id?: string
+          status?: Database["public"]["Enums"]["proposal_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_proposals_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "service_requests"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reviews: {
         Row: {
@@ -320,6 +589,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      service_requests: {
+        Row: {
+          budget_max: number | null
+          budget_min: number | null
+          category: string
+          created_at: string
+          customer_id: string
+          deadline: string | null
+          description: string
+          id: string
+          pincode: string | null
+          status: Database["public"]["Enums"]["request_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          budget_max?: number | null
+          budget_min?: number | null
+          category: string
+          created_at?: string
+          customer_id: string
+          deadline?: string | null
+          description: string
+          id?: string
+          pincode?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          budget_max?: number | null
+          budget_min?: number | null
+          category?: string
+          created_at?: string
+          customer_id?: string
+          deadline?: string | null
+          description?: string
+          id?: string
+          pincode?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       services: {
         Row: {
@@ -387,6 +701,81 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_transactions: {
+        Row: {
+          agent_id: string
+          amount: number
+          booking_id: string | null
+          created_at: string
+          id: string
+          note: string | null
+          type: Database["public"]["Enums"]["wallet_tx_type"]
+          withdrawal_id: string | null
+        }
+        Insert: {
+          agent_id: string
+          amount: number
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          type: Database["public"]["Enums"]["wallet_tx_type"]
+          withdrawal_id?: string | null
+        }
+        Update: {
+          agent_id?: string
+          amount?: number
+          booking_id?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          type?: Database["public"]["Enums"]["wallet_tx_type"]
+          withdrawal_id?: string | null
+        }
+        Relationships: []
+      }
+      withdrawal_requests: {
+        Row: {
+          admin_note: string | null
+          agent_id: string
+          amount: number
+          bank_account: string | null
+          created_at: string
+          id: string
+          ifsc: string | null
+          paid_at: string | null
+          status: Database["public"]["Enums"]["withdrawal_status"]
+          updated_at: string
+          upi_id: string | null
+        }
+        Insert: {
+          admin_note?: string | null
+          agent_id: string
+          amount: number
+          bank_account?: string | null
+          created_at?: string
+          id?: string
+          ifsc?: string | null
+          paid_at?: string | null
+          status?: Database["public"]["Enums"]["withdrawal_status"]
+          updated_at?: string
+          upi_id?: string | null
+        }
+        Update: {
+          admin_note?: string | null
+          agent_id?: string
+          amount?: number
+          bank_account?: string | null
+          created_at?: string
+          id?: string
+          ifsc?: string | null
+          paid_at?: string | null
+          status?: Database["public"]["Enums"]["withdrawal_status"]
+          updated_at?: string
+          upi_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -408,6 +797,19 @@ export type Database = {
         | "in_progress"
         | "completed"
         | "cancelled"
+      gig_status: "draft" | "pending" | "approved" | "rejected" | "paused"
+      gig_tier: "basic" | "standard" | "premium"
+      payment_method_t: "stripe" | "upi_manual"
+      payment_record_status: "pending" | "paid" | "failed" | "refunded"
+      payment_status_t: "unpaid" | "paid" | "refunded"
+      proposal_status: "pending" | "accepted" | "rejected" | "withdrawn"
+      request_status: "open" | "assigned" | "completed" | "cancelled"
+      wallet_tx_type:
+        | "credit_booking"
+        | "release_to_available"
+        | "debit_withdrawal"
+        | "adjustment"
+      withdrawal_status: "pending" | "approved" | "paid" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -543,6 +945,20 @@ export const Constants = {
         "completed",
         "cancelled",
       ],
+      gig_status: ["draft", "pending", "approved", "rejected", "paused"],
+      gig_tier: ["basic", "standard", "premium"],
+      payment_method_t: ["stripe", "upi_manual"],
+      payment_record_status: ["pending", "paid", "failed", "refunded"],
+      payment_status_t: ["unpaid", "paid", "refunded"],
+      proposal_status: ["pending", "accepted", "rejected", "withdrawn"],
+      request_status: ["open", "assigned", "completed", "cancelled"],
+      wallet_tx_type: [
+        "credit_booking",
+        "release_to_available",
+        "debit_withdrawal",
+        "adjustment",
+      ],
+      withdrawal_status: ["pending", "approved", "paid", "rejected"],
     },
   },
 } as const
