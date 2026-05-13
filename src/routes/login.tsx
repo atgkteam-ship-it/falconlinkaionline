@@ -50,12 +50,12 @@ function LoginPage() {
     } finally { setBusy(false); }
   };
 
-  const handleGoogle = async () => {
+  const handleOAuth = async (provider: "google" | "apple") => {
     const { lovable } = await import("@/integrations/lovable");
-    const result = await lovable.auth.signInWithOAuth("google", {
+    const result = await lovable.auth.signInWithOAuth(provider, {
       redirect_uri: `${window.location.origin}/`,
     });
-    if (result.error) { toast.error(result.error.message ?? "Google sign-in failed"); return; }
+    if (result.error) { toast.error(result.error.message ?? `${provider} sign-in failed`); return; }
     if (result.redirected) return;
     navigate({ to: "/" });
   };
