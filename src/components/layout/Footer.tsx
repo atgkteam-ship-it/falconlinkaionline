@@ -34,7 +34,7 @@ export function Footer() {
             <h4 className="text-sm font-semibold">Company</h4>
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
               <li>India · Made with care</li>
-              <li>support@falconlink.ai</li>
+              <li><a href="mailto:business.aarishsaifi@gmail.com" className="hover:text-foreground">business.aarishsaifi@gmail.com</a></li>
             </ul>
           </div>
         </div>
