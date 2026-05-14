@@ -17,11 +17,14 @@ import { Route as AgentRouteImport } from './routes/agent'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ServicesSlugRouteImport } from './routes/services.$slug'
+import { Route as GigsSlugRouteImport } from './routes/gigs.$slug'
 import { Route as CheckoutBookingIdRouteImport } from './routes/checkout.$bookingId'
 import { Route as BookServiceIdRouteImport } from './routes/book.$serviceId'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AgentsApplyRouteImport } from './routes/agents.apply'
 import { Route as AgentWalletRouteImport } from './routes/agent.wallet'
+import { Route as AgentGigsRouteImport } from './routes/agent.gigs'
+import { Route as AgentGigsNewRouteImport } from './routes/agent.gigs.new'
 
 const ServicesRoute = ServicesRouteImport.update({
   id: '/services',
@@ -63,6 +66,11 @@ const ServicesSlugRoute = ServicesSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => ServicesRoute,
 } as any)
+const GigsSlugRoute = GigsSlugRouteImport.update({
+  id: '/gigs/$slug',
+  path: '/gigs/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CheckoutBookingIdRoute = CheckoutBookingIdRouteImport.update({
   id: '/checkout/$bookingId',
   path: '/checkout/$bookingId',
@@ -88,6 +96,16 @@ const AgentWalletRoute = AgentWalletRouteImport.update({
   path: '/wallet',
   getParentRoute: () => AgentRoute,
 } as any)
+const AgentGigsRoute = AgentGigsRouteImport.update({
+  id: '/gigs',
+  path: '/gigs',
+  getParentRoute: () => AgentRoute,
+} as any)
+const AgentGigsNewRoute = AgentGigsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AgentGigsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -97,12 +115,15 @@ export interface FileRoutesByFullPath {
   '/bookings': typeof BookingsRoute
   '/login': typeof LoginRoute
   '/services': typeof ServicesRouteWithChildren
+  '/agent/gigs': typeof AgentGigsRouteWithChildren
   '/agent/wallet': typeof AgentWalletRoute
   '/agents/apply': typeof AgentsApplyRoute
   '/api/chat': typeof ApiChatRoute
   '/book/$serviceId': typeof BookServiceIdRoute
   '/checkout/$bookingId': typeof CheckoutBookingIdRoute
+  '/gigs/$slug': typeof GigsSlugRoute
   '/services/$slug': typeof ServicesSlugRoute
+  '/agent/gigs/new': typeof AgentGigsNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -112,12 +133,15 @@ export interface FileRoutesByTo {
   '/bookings': typeof BookingsRoute
   '/login': typeof LoginRoute
   '/services': typeof ServicesRouteWithChildren
+  '/agent/gigs': typeof AgentGigsRouteWithChildren
   '/agent/wallet': typeof AgentWalletRoute
   '/agents/apply': typeof AgentsApplyRoute
   '/api/chat': typeof ApiChatRoute
   '/book/$serviceId': typeof BookServiceIdRoute
   '/checkout/$bookingId': typeof CheckoutBookingIdRoute
+  '/gigs/$slug': typeof GigsSlugRoute
   '/services/$slug': typeof ServicesSlugRoute
+  '/agent/gigs/new': typeof AgentGigsNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -128,12 +152,15 @@ export interface FileRoutesById {
   '/bookings': typeof BookingsRoute
   '/login': typeof LoginRoute
   '/services': typeof ServicesRouteWithChildren
+  '/agent/gigs': typeof AgentGigsRouteWithChildren
   '/agent/wallet': typeof AgentWalletRoute
   '/agents/apply': typeof AgentsApplyRoute
   '/api/chat': typeof ApiChatRoute
   '/book/$serviceId': typeof BookServiceIdRoute
   '/checkout/$bookingId': typeof CheckoutBookingIdRoute
+  '/gigs/$slug': typeof GigsSlugRoute
   '/services/$slug': typeof ServicesSlugRoute
+  '/agent/gigs/new': typeof AgentGigsNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -145,12 +172,15 @@ export interface FileRouteTypes {
     | '/bookings'
     | '/login'
     | '/services'
+    | '/agent/gigs'
     | '/agent/wallet'
     | '/agents/apply'
     | '/api/chat'
     | '/book/$serviceId'
     | '/checkout/$bookingId'
+    | '/gigs/$slug'
     | '/services/$slug'
+    | '/agent/gigs/new'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -160,12 +190,15 @@ export interface FileRouteTypes {
     | '/bookings'
     | '/login'
     | '/services'
+    | '/agent/gigs'
     | '/agent/wallet'
     | '/agents/apply'
     | '/api/chat'
     | '/book/$serviceId'
     | '/checkout/$bookingId'
+    | '/gigs/$slug'
     | '/services/$slug'
+    | '/agent/gigs/new'
   id:
     | '__root__'
     | '/'
@@ -175,12 +208,15 @@ export interface FileRouteTypes {
     | '/bookings'
     | '/login'
     | '/services'
+    | '/agent/gigs'
     | '/agent/wallet'
     | '/agents/apply'
     | '/api/chat'
     | '/book/$serviceId'
     | '/checkout/$bookingId'
+    | '/gigs/$slug'
     | '/services/$slug'
+    | '/agent/gigs/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -195,6 +231,7 @@ export interface RootRouteChildren {
   ApiChatRoute: typeof ApiChatRoute
   BookServiceIdRoute: typeof BookServiceIdRoute
   CheckoutBookingIdRoute: typeof CheckoutBookingIdRoute
+  GigsSlugRoute: typeof GigsSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -255,6 +292,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ServicesSlugRouteImport
       parentRoute: typeof ServicesRoute
     }
+    '/gigs/$slug': {
+      id: '/gigs/$slug'
+      path: '/gigs/$slug'
+      fullPath: '/gigs/$slug'
+      preLoaderRoute: typeof GigsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/checkout/$bookingId': {
       id: '/checkout/$bookingId'
       path: '/checkout/$bookingId'
@@ -290,14 +334,42 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgentWalletRouteImport
       parentRoute: typeof AgentRoute
     }
+    '/agent/gigs': {
+      id: '/agent/gigs'
+      path: '/gigs'
+      fullPath: '/agent/gigs'
+      preLoaderRoute: typeof AgentGigsRouteImport
+      parentRoute: typeof AgentRoute
+    }
+    '/agent/gigs/new': {
+      id: '/agent/gigs/new'
+      path: '/new'
+      fullPath: '/agent/gigs/new'
+      preLoaderRoute: typeof AgentGigsNewRouteImport
+      parentRoute: typeof AgentGigsRoute
+    }
   }
 }
 
+interface AgentGigsRouteChildren {
+  AgentGigsNewRoute: typeof AgentGigsNewRoute
+}
+
+const AgentGigsRouteChildren: AgentGigsRouteChildren = {
+  AgentGigsNewRoute: AgentGigsNewRoute,
+}
+
+const AgentGigsRouteWithChildren = AgentGigsRoute._addFileChildren(
+  AgentGigsRouteChildren,
+)
+
 interface AgentRouteChildren {
+  AgentGigsRoute: typeof AgentGigsRouteWithChildren
   AgentWalletRoute: typeof AgentWalletRoute
 }
 
 const AgentRouteChildren: AgentRouteChildren = {
+  AgentGigsRoute: AgentGigsRouteWithChildren,
   AgentWalletRoute: AgentWalletRoute,
 }
 
@@ -327,6 +399,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiChatRoute: ApiChatRoute,
   BookServiceIdRoute: BookServiceIdRoute,
   CheckoutBookingIdRoute: CheckoutBookingIdRoute,
+  GigsSlugRoute: GigsSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
