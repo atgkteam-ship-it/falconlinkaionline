@@ -9,7 +9,6 @@ import { NotificationsBell } from "./NotificationsBell";
 const NAV = [
   { to: "/", label: "Home" },
   { to: "/services", label: "Services" },
-  { to: "/requests", label: "Requests" },
   { to: "/ai", label: "AI Assistant" },
   { to: "/agents/apply", label: "Become Agent" },
 ];

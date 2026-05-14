@@ -46,7 +46,13 @@ function AgentDashboard() {
   return (
     <PageLayout>
       <div className="mx-auto max-w-5xl px-4 py-10 md:px-6">
-        <h1 className="font-display text-3xl font-bold">Agent Dashboard</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="font-display text-3xl font-bold">Agent Dashboard</h1>
+          <div className="flex gap-2">
+            <Button asChild variant="outline" size="sm"><Link to="/agent/wallet">Wallet</Link></Button>
+            <Button asChild variant="outline" size="sm"><Link to="/agent/gigs">My gigs</Link></Button>
+          </div>
+        </div>
         {!verified && agentId && <div className="mt-3 rounded-xl border border-warning/30 bg-warning/10 p-3 text-sm">Your account is pending admin verification.</div>}
 
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
