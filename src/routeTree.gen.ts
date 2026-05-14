@@ -17,6 +17,7 @@ import { Route as AgentRouteImport } from './routes/agent'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ServicesSlugRouteImport } from './routes/services.$slug'
+import { Route as CheckoutBookingIdRouteImport } from './routes/checkout.$bookingId'
 import { Route as BookServiceIdRouteImport } from './routes/book.$serviceId'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AgentsApplyRouteImport } from './routes/agents.apply'
@@ -61,6 +62,11 @@ const ServicesSlugRoute = ServicesSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => ServicesRoute,
 } as any)
+const CheckoutBookingIdRoute = CheckoutBookingIdRouteImport.update({
+  id: '/checkout/$bookingId',
+  path: '/checkout/$bookingId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BookServiceIdRoute = BookServiceIdRouteImport.update({
   id: '/book/$serviceId',
   path: '/book/$serviceId',
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/agents/apply': typeof AgentsApplyRoute
   '/api/chat': typeof ApiChatRoute
   '/book/$serviceId': typeof BookServiceIdRoute
+  '/checkout/$bookingId': typeof CheckoutBookingIdRoute
   '/services/$slug': typeof ServicesSlugRoute
 }
 export interface FileRoutesByTo {
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/agents/apply': typeof AgentsApplyRoute
   '/api/chat': typeof ApiChatRoute
   '/book/$serviceId': typeof BookServiceIdRoute
+  '/checkout/$bookingId': typeof CheckoutBookingIdRoute
   '/services/$slug': typeof ServicesSlugRoute
 }
 export interface FileRoutesById {
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   '/agents/apply': typeof AgentsApplyRoute
   '/api/chat': typeof ApiChatRoute
   '/book/$serviceId': typeof BookServiceIdRoute
+  '/checkout/$bookingId': typeof CheckoutBookingIdRoute
   '/services/$slug': typeof ServicesSlugRoute
 }
 export interface FileRouteTypes {
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
     | '/agents/apply'
     | '/api/chat'
     | '/book/$serviceId'
+    | '/checkout/$bookingId'
     | '/services/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -143,6 +153,7 @@ export interface FileRouteTypes {
     | '/agents/apply'
     | '/api/chat'
     | '/book/$serviceId'
+    | '/checkout/$bookingId'
     | '/services/$slug'
   id:
     | '__root__'
@@ -156,6 +167,7 @@ export interface FileRouteTypes {
     | '/agents/apply'
     | '/api/chat'
     | '/book/$serviceId'
+    | '/checkout/$bookingId'
     | '/services/$slug'
   fileRoutesById: FileRoutesById
 }
@@ -170,6 +182,7 @@ export interface RootRouteChildren {
   AgentsApplyRoute: typeof AgentsApplyRoute
   ApiChatRoute: typeof ApiChatRoute
   BookServiceIdRoute: typeof BookServiceIdRoute
+  CheckoutBookingIdRoute: typeof CheckoutBookingIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -230,6 +243,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ServicesSlugRouteImport
       parentRoute: typeof ServicesRoute
     }
+    '/checkout/$bookingId': {
+      id: '/checkout/$bookingId'
+      path: '/checkout/$bookingId'
+      fullPath: '/checkout/$bookingId'
+      preLoaderRoute: typeof CheckoutBookingIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/book/$serviceId': {
       id: '/book/$serviceId'
       path: '/book/$serviceId'
@@ -277,7 +297,18 @@ const rootRouteChildren: RootRouteChildren = {
   AgentsApplyRoute: AgentsApplyRoute,
   ApiChatRoute: ApiChatRoute,
   BookServiceIdRoute: BookServiceIdRoute,
+  CheckoutBookingIdRoute: CheckoutBookingIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
