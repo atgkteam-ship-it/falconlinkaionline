@@ -21,6 +21,7 @@ import { Route as CheckoutBookingIdRouteImport } from './routes/checkout.$bookin
 import { Route as BookServiceIdRouteImport } from './routes/book.$serviceId'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AgentsApplyRouteImport } from './routes/agents.apply'
+import { Route as AgentWalletRouteImport } from './routes/agent.wallet'
 
 const ServicesRoute = ServicesRouteImport.update({
   id: '/services',
@@ -82,15 +83,21 @@ const AgentsApplyRoute = AgentsApplyRouteImport.update({
   path: '/agents/apply',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AgentWalletRoute = AgentWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => AgentRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/agent': typeof AgentRoute
+  '/agent': typeof AgentRouteWithChildren
   '/ai': typeof AiRoute
   '/bookings': typeof BookingsRoute
   '/login': typeof LoginRoute
   '/services': typeof ServicesRouteWithChildren
+  '/agent/wallet': typeof AgentWalletRoute
   '/agents/apply': typeof AgentsApplyRoute
   '/api/chat': typeof ApiChatRoute
   '/book/$serviceId': typeof BookServiceIdRoute
@@ -100,11 +107,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/agent': typeof AgentRoute
+  '/agent': typeof AgentRouteWithChildren
   '/ai': typeof AiRoute
   '/bookings': typeof BookingsRoute
   '/login': typeof LoginRoute
   '/services': typeof ServicesRouteWithChildren
+  '/agent/wallet': typeof AgentWalletRoute
   '/agents/apply': typeof AgentsApplyRoute
   '/api/chat': typeof ApiChatRoute
   '/book/$serviceId': typeof BookServiceIdRoute
@@ -115,11 +123,12 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
-  '/agent': typeof AgentRoute
+  '/agent': typeof AgentRouteWithChildren
   '/ai': typeof AiRoute
   '/bookings': typeof BookingsRoute
   '/login': typeof LoginRoute
   '/services': typeof ServicesRouteWithChildren
+  '/agent/wallet': typeof AgentWalletRoute
   '/agents/apply': typeof AgentsApplyRoute
   '/api/chat': typeof ApiChatRoute
   '/book/$serviceId': typeof BookServiceIdRoute
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/bookings'
     | '/login'
     | '/services'
+    | '/agent/wallet'
     | '/agents/apply'
     | '/api/chat'
     | '/book/$serviceId'
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/bookings'
     | '/login'
     | '/services'
+    | '/agent/wallet'
     | '/agents/apply'
     | '/api/chat'
     | '/book/$serviceId'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/bookings'
     | '/login'
     | '/services'
+    | '/agent/wallet'
     | '/agents/apply'
     | '/api/chat'
     | '/book/$serviceId'
@@ -174,7 +186,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
-  AgentRoute: typeof AgentRoute
+  AgentRoute: typeof AgentRouteWithChildren
   AiRoute: typeof AiRoute
   BookingsRoute: typeof BookingsRoute
   LoginRoute: typeof LoginRoute
@@ -271,8 +283,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgentsApplyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/agent/wallet': {
+      id: '/agent/wallet'
+      path: '/wallet'
+      fullPath: '/agent/wallet'
+      preLoaderRoute: typeof AgentWalletRouteImport
+      parentRoute: typeof AgentRoute
+    }
   }
 }
+
+interface AgentRouteChildren {
+  AgentWalletRoute: typeof AgentWalletRoute
+}
+
+const AgentRouteChildren: AgentRouteChildren = {
+  AgentWalletRoute: AgentWalletRoute,
+}
+
+const AgentRouteWithChildren = AgentRoute._addFileChildren(AgentRouteChildren)
 
 interface ServicesRouteChildren {
   ServicesSlugRoute: typeof ServicesSlugRoute
@@ -289,7 +318,7 @@ const ServicesRouteWithChildren = ServicesRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
-  AgentRoute: AgentRoute,
+  AgentRoute: AgentRouteWithChildren,
   AiRoute: AiRoute,
   BookingsRoute: BookingsRoute,
   LoginRoute: LoginRoute,
@@ -302,3 +331,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
