@@ -63,8 +63,8 @@ function BookPage() {
     if (error || !data) { setSubmitting(false); return toast.error(error?.message ?? "Failed"); }
     await supabase.from("booking_events").insert({ booking_id: data.id, status: agentId ? "assigned" : "pending", note: "Booking created" });
     await supabase.from("notifications").insert({ user_id: user.id, title: "Booking confirmed", body: `Your ${service.title} booking is being processed.`, link: "/bookings" });
-    toast.success("Booking created!");
-    navigate({ to: "/bookings" });
+    toast.success("Booking created — proceed to payment");
+    navigate({ to: "/checkout/$bookingId", params: { bookingId: data.id } });
   };
 
   if (!service) return <PageLayout><div className="py-20 text-center text-muted-foreground">Loading...</div></PageLayout>;
